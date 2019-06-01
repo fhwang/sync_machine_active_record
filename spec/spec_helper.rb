@@ -1,5 +1,10 @@
 require "bundler/setup"
-require "sync_machine_active_record"
+require "factory_bot"
+require 'sidekiq/testing'
+require "sync_machine/active_record"
+Dir.entries(File.expand_path("../support", __FILE__)).each do |file|
+  require "support/#{file}" if file =~ /\.rb$/
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -11,4 +16,16 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.include FactoryBot::Syntax::Methods
+
+  config.before(:suite) do
+    FactoryBot.find_definitions
+  end
 end
+
+ActiveRecord::Base.establish_connection(
+  adapter: 'sqlite3',
+  database: ':memory:'
+)
+create_tables_for_models
